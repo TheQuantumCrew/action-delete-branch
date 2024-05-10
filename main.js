@@ -8,6 +8,7 @@ async function main() {
         const owner = core.getInput("owner")
         const repository = core.getInput("repository")
         const branches = core.getInput("branches")
+        const exclude = core.getInput("exclude")
         const prefix = core.getInput("prefix")
         const suffix = core.getInput("suffix")
         const soft_fail = core.getInput("soft_fail")
@@ -15,6 +16,18 @@ async function main() {
         const client = github.getOctokit(token)
 
         let branchesToDelete = branches ? branches.split(",") : []
+
+        // get all branches from repository
+        const response = await client.repos.listBranches({
+            ...github.context.repo
+        })
+        console.log("==> Found " + response.data.length + " branches")
+        for (const branch of response.data) {
+            if (exclude.includes(branch.name)) {
+                return;
+            }
+            branchesToDelete.push(branch.name)
+        }
 
         if (numbers) {
             for (const number of numbers.split(",")) {
@@ -28,15 +41,15 @@ async function main() {
 
         let ownerOfRepository = owner ? owner : github.context.repo.owner
         let repositoryContainingBranches = repository ? repository : github.context.repo.repo
-        
+
         for (let branch of branchesToDelete) {
             if (prefix)
                 branch = prefix + branch
             if (suffix)
                 branch = branch + suffix
-            
+
             console.log("==> Deleting \"" + ownerOfRepository + "/" + repositoryContainingBranches + "/" + branch + "\" branch")
-            
+
             try {
                 await client.git.deleteRef({
                     owner: ownerOfRepository,
@@ -45,8 +58,8 @@ async function main() {
                 })
             } catch (error) {
                 const shouldFailSoftly = (soft_fail === 'true');
-                
-                if(shouldFailSoftly)
+
+                if (shouldFailSoftly)
                     core.warning(error.message)
                 else
                     core.setFailed(error.message)

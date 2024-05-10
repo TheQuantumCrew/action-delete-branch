@@ -39,6 +39,9 @@ async function main() {
             }
         }
 
+        console.log("==> Branches to delete: " + branchesToDelete)
+        console.log("==> Number to delete: " + branchesToDelete.length)
+
         let ownerOfRepository = owner ? owner : github.context.repo.owner
         let repositoryContainingBranches = repository ? repository : github.context.repo.repo
 

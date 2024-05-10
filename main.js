@@ -21,14 +21,13 @@ async function main() {
         const response = await client.repos.listBranches({
             ...github.context.repo
         })
+
         console.log("==> Found " + response.data.length + " branches")
+
         for (const branch of response.data) {
-            if (exclude.includes(branch.name)) {
-                return;
-            }
             branchesToDelete.push(branch.name)
         }
-
+        console.log("==> Branches to delete: " + branchesToDelete)
         if (numbers) {
             for (const number of numbers.split(",")) {
                 const pull = await client.pulls.get({
@@ -50,7 +49,9 @@ async function main() {
                 branch = prefix + branch
             if (suffix)
                 branch = branch + suffix
-
+            if (exclude && exclude.includes(branch)) {
+                return;
+            }
             console.log("==> Deleting \"" + ownerOfRepository + "/" + repositoryContainingBranches + "/" + branch + "\" branch")
 
             try {
